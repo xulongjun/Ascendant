@@ -35,3 +35,6 @@ No need to create empty folders just for appearance.
 5. PBI-007 verify public HTTPS smoke test, update/redeploy and rollback.
 
 This repository baseline creates **no** cloud resources and does **not** enable Actions deployment.
+
+
+> Git policy: direct commits to `main` by PO instruction (2026-10-20); no mandatory PR.
