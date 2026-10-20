@@ -1,0 +1,12 @@
+dist/
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+*.tfvars
+!prod.tfvars
+*.auto.tfvars
+.env
+*.pem
+*.pfx
+*.key

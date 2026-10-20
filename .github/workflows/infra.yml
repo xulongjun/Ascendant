@@ -1,0 +1,68 @@
+name: infra
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: plan only, or plan followed by apply
+        type: choice
+        required: true
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ascendant-production-infra
+  cancel-in-progress: false
+
+jobs:
+  terraform:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: infra/terraform
+    env:
+      ARM_USE_OIDC: true
+      TF_VAR_name_suffix: ${{ vars.NAME_SUFFIX }}
+      TF_STATE_STORAGE_ACCOUNT: ${{ vars.TF_STATE_STORAGE_ACCOUNT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Require names
+        shell: bash
+        run: |
+          if [[ ! "$TF_VAR_name_suffix" =~ ^[a-z0-9]{4,8}$ ]]; then
+            echo "Set production environment variable NAME_SUFFIX to 4-8 lowercase letters or digits."
+            exit 1
+          fi
+          if [[ ! "$TF_STATE_STORAGE_ACCOUNT" =~ ^stascendant[a-z0-9]{4,8}$ ]]; then
+            echo "Set TF_STATE_STORAGE_ACCOUNT to the bootstrap storage account name."
+            exit 1
+          fi
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.16.6
+      - name: Azure login
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Init
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=rg-ascendant-tfstate" \
+            -backend-config="storage_account_name=${TF_STATE_STORAGE_ACCOUNT}" \
+            -backend-config="container_name=tfstate"
+      - name: Plan
+        run: terraform plan -input=false -var-file=prod.tfvars -out=tfplan
+      - name: Apply
+        if: inputs.action == 'apply'
+        run: terraform apply -input=false tfplan
