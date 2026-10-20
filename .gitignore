@@ -1,0 +1,47 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.key
+*.secret
+secrets.*
+*credentials*.json
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Frontend/JS
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.vite/
+*.tsbuildinfo
+
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# OS/editor
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local Azure CLI
+.azure/
